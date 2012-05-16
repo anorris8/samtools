@@ -7,8 +7,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include "bam.h"
+
+#include "glibc_win64_flat/getopt.h"
 
 typedef struct {     // auxiliary data structure
 	bamFile fp;      // the file handler

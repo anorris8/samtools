@@ -1,6 +1,10 @@
 #include <math.h>
 #include "errmod.h"
 #include "ksort.h"
+#include "glibc_win64_flat/_math_.h"
+
+#define lgamma __lgamma
+
 KSORT_INIT_GENERIC(uint16_t)
 
 typedef struct __errmod_coef_t {

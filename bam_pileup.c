@@ -217,7 +217,7 @@ const bam_pileup1_t *bam_plp_next(bam_plp_t iter, int *_tid, int *_pos, int *_n_
 		// update iter->tid and iter->pos
 		if (iter->head->next) {
 			if (iter->tid > iter->head->b.core.tid) {
-				fprintf(stderr, "[%s] unsorted input. Pileup aborts.\n", __func__);
+				fprintf(stderr, "[%s] unsorted input. Pileup aborts.\n", __FUNCTION__);
 				iter->error = 1;
 				*_n_plp = -1;
 				return 0;

@@ -2,9 +2,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <io.h>
 #include "bcf.h"
-#include "kstring.h"
-#include "kseq.h"
+#include "../kstring.h"
+#include "../kseq.h"
 KSTREAM_INIT(gzFile, gzread, 4096)
 
 typedef struct {
@@ -65,7 +66,7 @@ bcf_t *vcf_open(const char *fn, const char *mode)
 	bp->v = v;
 	v->refhash = bcf_str2id_init();
 	if (strchr(mode, 'r')) {
-		v->fp = strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(fileno(stdin), "r");
+		v->fp = strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(_fileno(stdin), "r");
 		v->ks = ks_init(v->fp);
 	} else if (strchr(mode, 'w'))
 		v->fpout = strcmp(fn, "-")? fopen(fn, "w") : stdout;

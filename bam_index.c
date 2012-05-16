@@ -525,11 +525,11 @@ int bam_idxstats(int argc, char *argv[])
 		return 1;
 	}
 	fp = bam_open(argv[1], "r");
-	if (fp == 0) { fprintf(stderr, "[%s] fail to open BAM.\n", __func__); return 1; }
+	if (fp == 0) { fprintf(stderr, "[%s] fail to open BAM.\n", __FUNCTION__); return 1; }
 	header = bam_header_read(fp);
 	bam_close(fp);
 	idx = bam_index_load(argv[1]);
-	if (idx == 0) { fprintf(stderr, "[%s] fail to load the index.\n", __func__); return 1; }
+	if (idx == 0) { fprintf(stderr, "[%s] fail to load the index.\n", __FUNCTION__); return 1; }
 	for (i = 0; i < idx->n; ++i) {
 		khint_t k;
 		khash_t(i) *h = idx->index[i];

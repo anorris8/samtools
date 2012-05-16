@@ -57,10 +57,13 @@ all:bam_cat
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+//#include <unistd.h>
 
 #include "bgzf.h"
 #include "bam.h"
+
+#include "glibc_win64_flat/getopt.h"
+#include <io.h>
 
 #define BUF_SIZE 0x10000
 
@@ -79,9 +82,9 @@ int bam_cat(int nfn, char * const *fn, const bam_header_t *h, const char* outbam
     const int es=BGZF_EMPTY_BLOCK_SIZE;
     int i;
     
-    fp = strcmp(outbam, "-")? bgzf_open(outbam, "w") : bgzf_fdopen(fileno(stdout), "w");
+    fp = strcmp(outbam, "-")? bgzf_open(outbam, "w") : bgzf_fdopen(_fileno(stdout), "w");
     if (fp == 0) {
-        fprintf(stderr, "[%s] ERROR: fail to open output file '%s'.\n", __func__, outbam);
+        fprintf(stderr, "[%s] ERROR: fail to open output file '%s'.\n", __FUNCTION__, outbam);
         return 1;
     }
     if (h) bam_header_write(fp, h);
@@ -92,18 +95,18 @@ int bam_cat(int nfn, char * const *fn, const bam_header_t *h, const char* outbam
         bam_header_t *old;
         int len,j;
         
-        in = strcmp(fn[i], "-")? bam_open(fn[i], "r") : bam_dopen(fileno(stdin), "r");
+        in = strcmp(fn[i], "-")? bam_open(fn[i], "r") : bam_dopen(_fileno(stdin), "r");
         if (in == 0) {
-            fprintf(stderr, "[%s] ERROR: fail to open file '%s'.\n", __func__, fn[i]);
+            fprintf(stderr, "[%s] ERROR: fail to open file '%s'.\n", __FUNCTION__, fn[i]);
             return -1;
         }
         if (in->open_mode != 'r') return -1;
         
         old = bam_header_read(in);
-		if (h == 0 && i == 0) bam_header_write(fp, old);
+        if (h == 0 && i == 0) bam_header_write(fp, old);
         
         if (in->block_offset < in->block_length) {
-            bgzf_write(fp, in->uncompressed_block + in->block_offset, in->block_length - in->block_offset);
+            bgzf_write(fp, (uint8_t*)in->uncompressed_block + in->block_offset, in->block_length - in->block_offset);
             bgzf_flush(fp);
         }
         
@@ -118,7 +121,7 @@ int bam_cat(int nfn, char * const *fn, const bam_header_t *h, const char* outbam
             if(len<es){
                 int diff=es-len;
                 if(j==0) {
-                    fprintf(stderr, "[%s] ERROR: truncated file?: '%s'.\n", __func__, fn[i]);
+                    fprintf(stderr, "[%s] ERROR: truncated file?: '%s'.\n", __FUNCTION__, fn[i]);
                     return -1;
                 }
                 fwrite(ebuf, 1, len, fp_file);
@@ -139,7 +142,7 @@ int bam_cat(int nfn, char * const *fn, const bam_header_t *h, const char* outbam
             const uint8_t gzip2=ebuf[1];
             const uint32_t isize=*((uint32_t*)(ebuf+es-4));
             if(((gzip1!=GZIPID1) || (gzip2!=GZIPID2)) || (isize!=0)) {
-                fprintf(stderr, "[%s] WARNING: Unexpected block structure in file '%s'.", __func__, fn[i]);
+                fprintf(stderr, "[%s] WARNING: Unexpected block structure in file '%s'.", __FUNCTION__, fn[i]);
                 fprintf(stderr, " Possible output corruption.\n");
                 fwrite(ebuf, 1, es, fp_file);
             }
@@ -157,28 +160,28 @@ int bam_cat(int nfn, char * const *fn, const bam_header_t *h, const char* outbam
 int main_cat(int argc, char *argv[])
 {
     bam_header_t *h = 0;
-	char *outfn = 0;
-	int c, ret;
-	while ((c = getopt(argc, argv, "h:o:")) >= 0) {
-		switch (c) {
-			case 'h': {
-        		tamFile fph = sam_open(optarg);
-		        if (fph == 0) {
-    		        fprintf(stderr, "[%s] ERROR: fail to read the header from '%s'.\n", __func__, argv[1]);
-        		    return 1;
-	        	}
-	    	    h = sam_header_read(fph);
-    	    	sam_close(fph);
-				break;
-			}
-			case 'o': outfn = strdup(optarg); break;
-		}
-	}
-	if (argc - optind < 2) {
+    char *outfn = 0;
+    int c, ret;
+    while ((c = getopt(argc, argv, "h:o:")) >= 0) {
+        switch (c) {
+            case 'h': {
+                tamFile fph = sam_open(optarg);
+                if (fph == 0) {
+                    fprintf(stderr, "[%s] ERROR: fail to read the header from '%s'.\n", __FUNCTION__, argv[1]);
+                    return 1;
+                }
+                h = sam_header_read(fph);
+                sam_close(fph);
+                break;
+            }
+            case 'o': outfn = strdup(optarg); break;
+        }
+    }
+    if (argc - optind < 2) {
         fprintf(stderr, "Usage: samtools cat [-h header.sam] [-o out.bam] <in1.bam> <in2.bam> [...]\n");
         return 1;
     }
     ret = bam_cat(argc - optind, argv + optind, h, outfn? outfn : "-");
-	free(outfn);
-	return ret;
+    free(outfn);
+    return ret;
 }

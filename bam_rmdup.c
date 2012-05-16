@@ -2,8 +2,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <zlib.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include "sam.h"
+
+#include "glibc_win64_flat/getopt.h"
 
 typedef bam1_t *bam1_p;
 

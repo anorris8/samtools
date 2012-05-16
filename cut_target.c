@@ -1,9 +1,11 @@
-#include <unistd.h>
+//#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include "bam.h"
 #include "errmod.h"
 #include "faidx.h"
+
+#include "glibc_win64_flat/getopt.h"
 
 #define ERR_DEP 0.83f
 
@@ -150,7 +152,7 @@ int main_cut_target(int argc, char *argv[])
 			case '1': g_param.e[1][1] = atoi(optarg); break;
 			case '2': g_param.e[1][2] = atoi(optarg); break;
 			case 'f': g.fai = fai_load(optarg);
-				if (g.fai == 0) fprintf(stderr, "[%s] fail to load the fasta index.\n", __func__);
+				if (g.fai == 0) fprintf(stderr, "[%s] fail to load the fasta index.\n", __FUNCTION__);
 				break;
 		}
 	}
@@ -159,7 +161,7 @@ int main_cut_target(int argc, char *argv[])
 		return 1;
 	}
 	l = max_l = 0; cns = 0;
-	g.fp = strcmp(argv[optind], "-")? bam_open(argv[optind], "r") : bam_dopen(fileno(stdin), "r");
+	g.fp = strcmp(argv[optind], "-")? bam_open(argv[optind], "r") : bam_dopen(_fileno(stdin), "r");
 	g.h = bam_header_read(g.fp);
 	g.em = errmod_init(1 - ERR_DEP);
 	plp = bam_plp_init(read_aln, &g);

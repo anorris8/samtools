@@ -31,6 +31,10 @@
 #include "knetfile.h"
 #endif
 
+#ifdef _MSC_VER
+#define inline __inline
+#endif
+
 //typedef int8_t bool;
 
 typedef struct {
@@ -38,10 +42,10 @@ typedef struct {
     char open_mode;  // 'r' or 'w'
     int16_t owned_file, compress_level;
 #ifdef _USE_KNETFILE
-	union {
-		knetFile *fpr;
-		FILE *fpw;
-	} x;
+    union {
+        knetFile *fpr;
+        FILE *fpw;
+    } x;
 #else
     FILE* file;
 #endif
@@ -52,9 +56,9 @@ typedef struct {
     int64_t block_address;
     int block_length;
     int block_offset;
-	int cache_size;
+    int cache_size;
     const char* error;
-	void *cache; // a pointer to a hash table
+    void *cache; // a pointer to a hash table
 } BGZF;
 
 #ifdef __cplusplus
@@ -136,12 +140,12 @@ int bgzf_check_bgzf(const char *fn);
 
 static inline int bgzf_getc(BGZF *fp)
 {
-	int c;
-	if (fp->block_offset >= fp->block_length) {
-		if (bgzf_read_block(fp) != 0) return -2; /* error */
-		if (fp->block_length == 0) return -1; /* end-of-file */
-	}
-	c = ((unsigned char*)fp->uncompressed_block)[fp->block_offset++];
+    int c;
+    if (fp->block_offset >= fp->block_length) {
+        if (bgzf_read_block(fp) != 0) return -2; /* error */
+        if (fp->block_length == 0) return -1; /* end-of-file */
+    }
+    c = ((unsigned char*)fp->uncompressed_block)[fp->block_offset++];
     if (fp->block_offset == fp->block_length) {
 #ifdef _USE_KNETFILE
         fp->block_address = knet_tell(fp->x.fpr);
@@ -151,7 +155,7 @@ static inline int bgzf_getc(BGZF *fp)
         fp->block_offset = 0;
         fp->block_length = 0;
     }
-	return c;
+    return c;
 }
 
 #endif

@@ -4,14 +4,19 @@
 #include <stdio.h>
 #include <errno.h>
 #include <assert.h>
+#include <io.h>
+#include <malloc.h>
+#include <float.h>
 #include "prob1.h"
-
-#include "kseq.h"
+#include "../kseq.h"
+#include "..\glibc_win64_flat\_math_.h"
 KSTREAM_INIT(gzFile, gzread, 16384)
 
 #define MC_MAX_EM_ITER 16
 #define MC_EM_EPS 1e-5
 #define MC_DEF_INDEL 0.15
+
+#define lgamma __lgamma
 
 unsigned char seq_nt4_table[256] = {
 	4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4,  4, 4, 4, 4, 
@@ -93,7 +98,7 @@ int bcf_p1_read_prior(bcf_p1aux_t *ma, const char *fn)
 	long double sum;
 	int dret, k;
 	memset(&s, 0, sizeof(kstring_t));
-	fp = strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(fileno(stdin), "r");
+	fp = strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(_fileno(stdin), "r");
 	ks = ks_init(fp);
 	memset(ma->phi, 0, sizeof(double) * (ma->M + 1));
 	while (ks_getuntil(ks, '\n', &s, &dret) >= 0) {
@@ -120,7 +125,7 @@ int bcf_p1_read_prior(bcf_p1aux_t *ma, const char *fn)
 	for (k = 0; k <= ma->M; ++k) fprintf(stderr, " %d:%.3lg", k, ma->phi[ma->M - k]);
 	fputc('\n', stderr);
 	for (sum = 0., k = 1; k < ma->M; ++k) sum += ma->phi[ma->M - k] * (2.* k * (ma->M - k) / ma->M / (ma->M - 1));
-	fprintf(stderr, "[%s] heterozygosity=%lf, ", __func__, (double)sum);
+	fprintf(stderr, "[%s] heterozygosity=%lf, ", __FUNCTION__, (double)sum);
 	for (sum = 0., k = 1; k <= ma->M; ++k) sum += k * ma->phi[ma->M - k] / ma->M;
 	fprintf(stderr, "theta=%lf\n", (double)sum);
 	bcf_p1_indel_prior(ma, MC_DEF_INDEL);
@@ -167,7 +172,7 @@ int bcf_p1_set_n1(bcf_p1aux_t *b, int n1)
 {
 	if (n1 == 0 || n1 >= b->n) return -1;
 	if (b->M != b->n * 2) {
-		fprintf(stderr, "[%s] unable to set `n1' when there are haploid samples.\n", __func__);
+		fprintf(stderr, "[%s] unable to set `n1' when there are haploid samples.\n", __FUNCTION__);
 		return -1;
 	}
 	b->n1 = n1;
@@ -457,7 +462,7 @@ static double mc_cal_afs(bcf_p1aux_t *ma, double *p_ref_folded, double *p_var_fo
 		sum += (long double)phi[k] * ma->z[k];
 	for (k = 0; k <= ma->M; ++k) {
 		ma->afs1[k] = phi[k] * ma->z[k] / sum;
-		if (isnan(ma->afs1[k]) || isinf(ma->afs1[k])) return -1.;
+		if (_isnan(ma->afs1[k]) || __isinf(ma->afs1[k])) return -1.; //dong code, verify
 	}
 	// compute folded variant probability
 	for (k = 0, sum = 0.; k <= ma->M; ++k)

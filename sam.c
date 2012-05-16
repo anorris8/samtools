@@ -1,10 +1,20 @@
 #include <string.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include "faidx.h"
 #include "sam.h"
+#include <io.h>
 
 #define TYPE_BAM  1
 #define TYPE_READ 2
+
+//code from posix/unistd.h
+/* Values for the second argument to access.
+   These may be OR'd together.  */
+#define	R_OK	4		/* Test for read permission.  */
+#define	W_OK	2		/* Test for write permission.  */
+#define	X_OK	1		/* Test for execute permission.  */
+#define	F_OK	0		/* Test for existence.  */
+//end
 
 bam_header_t *bam_header_dup(const bam_header_t *h0)
 {
@@ -44,7 +54,7 @@ samfile_t *samopen(const char *fn, const char *mode, const void *aux)
 		fp->type |= TYPE_READ;
 		if (strchr(mode, 'b')) { // binary
 			fp->type |= TYPE_BAM;
-			fp->x.bam = strcmp(fn, "-")? bam_open(fn, "r") : bam_dopen(fileno(stdin), "r");
+			fp->x.bam = strcmp(fn, "-")? bam_open(fn, "r") : bam_dopen(_fileno(stdin), "r");
 			if (fp->x.bam == 0) goto open_err_ret;
 			fp->header = bam_header_read(fp->x.bam);
 		} else { // text
@@ -73,12 +83,12 @@ samfile_t *samopen(const char *fn, const char *mode, const void *aux)
 			if (strchr(mode, 'u')) compress_level = 0;
 			bmode[0] = 'w'; bmode[1] = compress_level < 0? 0 : compress_level + '0'; bmode[2] = 0;
 			fp->type |= TYPE_BAM;
-			fp->x.bam = strcmp(fn, "-")? bam_open(fn, bmode) : bam_dopen(fileno(stdout), bmode);
+			fp->x.bam = strcmp(fn, "-")? bam_open(fn, bmode) : bam_dopen(_fileno(stdout), bmode);
 			if (fp->x.bam == 0) goto open_err_ret;
 			bam_header_write(fp->x.bam, fp->header);
 		} else { // text
 			// open file
-			fp->x.tamw = strcmp(fn, "-")? fopen(fn, "w") : stdout;
+			fp->x.tamw = strcmp(fn, "-")? fopen(fn, "w") : stdout; //dong fix, open as binary 2012-04-25; 2012-04-28, with my change in kseq.h, no longer change here, but comments for future reference
 			if (fp->x.tamr == 0) goto open_err_ret;
 			if (strchr(mode, 'X')) fp->type |= BAM_OFSTR<<2;
 			else if (strchr(mode, 'x')) fp->type |= BAM_OFHEX<<2;
@@ -164,8 +174,8 @@ char *samfaipath(const char *fn_ref)
 	if (fn_ref == 0) return 0;
 	fn_list = calloc(strlen(fn_ref) + 5, 1);
 	strcat(strcpy(fn_list, fn_ref), ".fai");
-	if (access(fn_list, R_OK) == -1) { // fn_list is unreadable
-		if (access(fn_ref, R_OK) == -1) {
+	if (_access(fn_list, R_OK) == -1) { // fn_list is unreadable
+		if (_access(fn_ref, R_OK) == -1) {
 			fprintf(stderr, "[samfaipath] fail to read file %s.\n", fn_ref);
 		} else {
 			if (bam_verbose >= 3) fprintf(stderr, "[samfaipath] build FASTA index...\n");

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdint.h>
+#include <malloc.h>
 #include "bcf.h"
 
 #define MAX_GENO 359

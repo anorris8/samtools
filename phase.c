@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <stdint.h>
 #include <math.h>
 #include <zlib.h>
@@ -8,6 +8,8 @@
 #include "errmod.h"
 
 #include "kseq.h"
+
+#include "glibc_win64_flat/getopt.h"
 KSTREAM_INIT(gzFile, gzread, 16384)
 
 #define MAX_VARS 256
@@ -472,7 +474,7 @@ static khash_t(set64) *loadpos(const char *fn, bam_header_t *h)
 
 	hash = kh_init(set64);
 	str = calloc(1, sizeof(kstring_t));
-	fp = strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(fileno(stdin), "r");
+	fp = strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(_fileno(stdin), "r");
 	ks = ks_init(fp);
 	while (ks_getuntil(ks, 0, str, &dret) >= 0) {
 		int tid = bam_get_tid(h, str->s);
@@ -551,7 +553,7 @@ int main_phase(int argc, char *argv[])
 		fprintf(stderr, "\n");
 		return 1;
 	}
-	g.fp = strcmp(argv[optind], "-")? bam_open(argv[optind], "r") : bam_dopen(fileno(stdin), "r");
+	g.fp = strcmp(argv[optind], "-")? bam_open(argv[optind], "r") : bam_dopen(_fileno(stdin), "r");
 	h = bam_header_read(g.fp);
 	if (fn_list) { // read the list of sites to phase
 		bam_init_header_hash(h);

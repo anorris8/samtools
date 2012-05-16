@@ -77,7 +77,7 @@ bam_header_t *bam_header_read(bamFile fp)
 	if (i < 0) {
 		// If the file is a pipe, checking the EOF marker will *always* fail
 		// with ESPIPE.  Suppress the error message in this case.
-		if (errno != ESPIPE) perror("[bam_header_read] bgzf_check_EOF");
+		if (errno != ESPIPE && errno != 0) perror("[bam_header_read] bgzf_check_EOF"); //dong code, verify
 	}
 	else if (i == 0) fprintf(stderr, "[bam_header_read] EOF marker is absent. The input is probably truncated.\n");
 	// read "BAM1"

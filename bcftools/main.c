@@ -1,10 +1,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include "bcf.h"
-
-#include "kseq.h"
+#include "../glibc_win64_flat/getopt.h"
+#include "../kseq.h"
 KSTREAM_INIT(gzFile, gzread, 0x10000)
 
 int bcfview(int argc, char *argv[]);
@@ -71,7 +71,7 @@ int bcf_main_ldpair(int argc, char *argv[])
 	str2id = bcf_build_refhash(h);
 	idx = bcf_idx_load(argv[1]);
 	if (idx == 0) {
-		fprintf(stderr, "[%s] No bcf index is found. Abort!\n", __func__);
+		fprintf(stderr, "[%s] No bcf index is found. Abort!\n", __FUNCTION__);
 		return 1;
 	}
 	b0 = calloc(1, sizeof(bcf1_t));

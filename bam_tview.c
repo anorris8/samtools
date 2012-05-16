@@ -9,7 +9,7 @@
 #define _HAVE_CURSES
 #endif
 #elif _CURSES_LIB == 2
-#include <xcurses.h>
+#include <curses.h>
 #define _HAVE_CURSES
 #else
 #warning "_CURSES_LIB is not 0, 1 or 2; tview is NOT compiled"
@@ -431,7 +431,7 @@ int bam_tview_main(int argc, char *argv[])
 }
 #else // #ifdef _HAVE_CURSES
 #include <stdio.h>
-#warning "No curses library is available; tview is disabled."
+#pragma message("No curses library is available; tview is disabled.")
 int bam_tview_main(int argc, char *argv[])
 {
 	fprintf(stderr, "[bam_tview_main] The ncurses library is unavailable; tview is not compiled.\n");

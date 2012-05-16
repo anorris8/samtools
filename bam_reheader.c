@@ -17,7 +17,7 @@ int bam_reheader(BGZF *in, const bam_header_t *h, int fd)
 	fp = bgzf_fdopen(fd, "w");
 	bam_header_write(fp, h);
 	if (in->block_offset < in->block_length) {
-		bgzf_write(fp, in->uncompressed_block + in->block_offset, in->block_length - in->block_offset);
+		bgzf_write(fp, (uint8_t*)in->uncompressed_block + in->block_offset, in->block_length - in->block_offset);
 		bgzf_flush(fp);
 	}
 #ifdef _USE_KNETFILE
@@ -44,18 +44,18 @@ int main_reheader(int argc, char *argv[])
 	{ // read the header
 		tamFile fph = sam_open(argv[1]);
 		if (fph == 0) {
-			fprintf(stderr, "[%s] fail to read the header from %s.\n", __func__, argv[1]);
+			fprintf(stderr, "[%s] fail to read the header from %s.\n", __FUNCTION__, argv[1]);
 			return 1;
 		}
 		h = sam_header_read(fph);
 		sam_close(fph);
 	}
-	in = strcmp(argv[2], "-")? bam_open(argv[2], "r") : bam_dopen(fileno(stdin), "r");
+	in = strcmp(argv[2], "-")? bam_open(argv[2], "r") : bam_dopen(_fileno(stdin), "r");
 	if (in == 0) {
-		fprintf(stderr, "[%s] fail to open file %s.\n", __func__, argv[2]);
+		fprintf(stderr, "[%s] fail to open file %s.\n", __FUNCTION__, argv[2]);
 		return 1;
 	}
-	bam_reheader(in, h, fileno(stdout));
+	bam_reheader(in, h, _fileno(stdout));
 	bgzf_close(in);
 	return 0;
 }

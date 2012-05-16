@@ -1,7 +1,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
-#include "kstring.h"
+#include <io.h>
+#include "../kstring.h"
 #include "bcf.h"
 
 bcf_t *bcf_open(const char *fn, const char *mode)
@@ -9,9 +10,9 @@ bcf_t *bcf_open(const char *fn, const char *mode)
 	bcf_t *b;
 	b = calloc(1, sizeof(bcf_t));
 	if (strchr(mode, 'w')) {
-		b->fp = strcmp(fn, "-")? bgzf_open(fn, mode) : bgzf_fdopen(fileno(stdout), mode);
+		b->fp = strcmp(fn, "-")? bgzf_open(fn, mode) : bgzf_fdopen(_fileno(stdout), mode);
 	} else {
-		b->fp = strcmp(fn, "-")? bgzf_open(fn, mode) : bgzf_fdopen(fileno(stdin), mode);
+		b->fp = strcmp(fn, "-")? bgzf_open(fn, mode) : bgzf_fdopen(_fileno(stdin), mode);
 	}
 #ifndef BCF_LITE
 	b->fp->owned_file = 1;
@@ -112,7 +113,7 @@ int bcf_sync(bcf1_t *b)
 		}
 	}
 	if (n != 5) {
-		fprintf(stderr, "[%s] incorrect number of fields (%d != 5) at %d:%d\n", __func__, n, b->tid, b->pos);
+		fprintf(stderr, "[%s] incorrect number of fields (%d != 5) at %d:%d\n", __FUNCTION__, n, b->tid, b->pos);
 		return -1;
 	}
 	b->ref = tmp[0]; b->alt = tmp[1]; b->flt = tmp[2]; b->info = tmp[3]; b->fmt = tmp[4];

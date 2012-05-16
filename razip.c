@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <fcntl.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "razf.h"
+
+#include "..\samtools-0.1.18\glibc_win64_flat\getopt.h"
+#include <io.h>
 
 #define WINDOW_SIZE 4096
 
@@ -27,7 +30,7 @@ static int write_open(const char *fn, int is_forced)
 	int fd = -1;
 	char c;
 	if (!is_forced) {
-		if ((fd = open(fn, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0666)) < 0 && errno == EEXIST) {
+		if ((fd = _open(fn, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0666)) < 0 && errno == EEXIST) {
 			printf("razip: %s already exists; do you wish to overwrite (y or n)? ", fn);
 			scanf("%c", &c);
 			if (c != 'Y' && c != 'y') {
@@ -37,7 +40,7 @@ static int write_open(const char *fn, int is_forced)
 		}
 	}
 	if (fd < 0) {
-		if ((fd = open(fn, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0) {
+		if ((fd = _open(fn, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0) {
 			fprintf(stderr, "razip: %s: Fail to write\n", fn);
 			exit(1);
 		}
@@ -72,12 +75,12 @@ int main(int argc, char **argv)
 	if(compress == 1){
 		int f_src, f_dst = -1;
 		if(argc > optind){
-			if((f_src = open(argv[optind], O_RDONLY)) < 0){
+			if((f_src = _open(argv[optind], O_RDONLY)) < 0){
 				fprintf(stderr, " -- Cannot open file: %s --\n", argv[optind]);
 				return 1;
 			}
 			if(pstdout){
-				f_dst = fileno(stdout);
+				f_dst = _fileno(stdout);
 			} else {
 				char *name = malloc(sizeof(strlen(argv[optind]) + 5));
 				strcpy(name, argv[optind]);
@@ -87,16 +90,16 @@ int main(int argc, char **argv)
 				free(name);
 			}
 		} else if(pstdout){ 
-			f_src = fileno(stdin);
-			f_dst = fileno(stdout);
+			f_src = _fileno(stdin);
+			f_dst = _fileno(stdout);
 		} else return razf_main_usage();
 		rz = razf_dopen(f_dst, "w");
 		buffer = malloc(WINDOW_SIZE);
-		while((c = read(f_src, buffer, WINDOW_SIZE)) > 0) razf_write(rz, buffer, c);
+		while((c = _read(f_src, buffer, WINDOW_SIZE)) > 0) razf_write(rz, buffer, c);
 		razf_close(rz); // f_dst will be closed here
-		if (argc > optind && !pstdout) unlink(argv[optind]);
+		if (argc > optind && !pstdout) _unlink(argv[optind]);
 		free(buffer);
-		close(f_src);
+		_close(f_src);
 		return 0;
 	} else {
 		if(argc <= optind) return razf_main_usage();
@@ -119,7 +122,7 @@ int main(int argc, char **argv)
 				name[strlen(name) - 3] = '\0';
 				f_dst = write_open(name, is_forced);
 				free(name);
-			} else f_dst = fileno(stdout);
+			} else f_dst = _fileno(stdout);
 			rz = razf_open(argv[optind], "r");
 			buffer = malloc(WINDOW_SIZE);
 			razf_seek(rz, start, SEEK_SET);
@@ -128,11 +131,11 @@ int main(int argc, char **argv)
 				else c = razf_read(rz, buffer, (end - start > WINDOW_SIZE)? WINDOW_SIZE:(end - start));
 				if(c <= 0) break;
 				start += c;
-				write(f_dst, buffer, c);
+				_write(f_dst, buffer, c);
 				if(end >= 0 && start >= end) break;
 			}
 			free(buffer);
-			if (!pstdout) unlink(argv[optind]);
+			if (!pstdout) _unlink(argv[optind]);
 		}
 		razf_close(rz);
 		return 0;

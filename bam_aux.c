@@ -136,7 +136,7 @@ int bam_parse_region(bam_header_t *header, const char *str, int *ref_id, int *be
 		if (iter == kh_end(h)) { // cannot find the sequence name
 			iter = kh_get(s, h, str); // try str as the name
 			if (iter == kh_end(h)) {
-				if (bam_verbose >= 2) fprintf(stderr, "[%s] fail to determine the sequence name.\n", __func__);
+				if (bam_verbose >= 2) fprintf(stderr, "[%s] fail to determine the sequence name.\n", __FUNCTION__);
 				free(s); return -1;
 			} else s[name_end] = ':', name_end = l;
 		}
@@ -204,10 +204,3 @@ char *bam_aux2Z(const uint8_t *s)
 	if (type == 'Z' || type == 'H') return (char*)s;
 	else return 0;
 }
-
-#ifdef _WIN32
-double drand48()
-{
-	return (double)rand() / RAND_MAX;
-}
-#endif

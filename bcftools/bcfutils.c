@@ -1,14 +1,11 @@
 #include <string.h>
 #include <math.h>
+#include <malloc.h>
 #include "bcf.h"
-#include "kstring.h"
-#include "khash.h"
+#include "../kstring.h"
+#include "../khash.h"
+#include "../glibc_win64_flat/stdlib.h"
 KHASH_MAP_INIT_STR(str2id, int)
-
-#ifdef _WIN32
-#define srand48(x) srand(x)
-#define drand48() ((double)rand() / RAND_MAX)
-#endif
 
 // FIXME: valgrind report a memory leak in this function. Probably it does not get deallocated...
 void *bcf_build_refhash(bcf_hdr_t *h)
@@ -287,7 +284,7 @@ bcf_hdr_t *bcf_hdr_subsam(const bcf_hdr_t *h0, int n, char *const* samples, int 
 			kputs(samples[i], &s); kputc('\0', &s);
 		}
 	}
-	if (j < n) fprintf(stderr, "<%s> %d samples in the list but not in BCF.", __func__, n - j);
+	if (j < n) fprintf(stderr, "<%s> %d samples in the list but not in BCF.", __FUNCTION__, n - j);
 	kh_destroy(str2id, hash);
 	h = calloc(1, sizeof(bcf_hdr_t));
 	*h = *h0;
@@ -352,7 +349,7 @@ int bcf_gl10(const bcf1_t *b, uint8_t *gl)
 	for (k = 0; k < 4; ++k)
 		if (map[k] < 0) map[k] = k1;
 	for (i = 0; i < b->n_smpl; ++i) {
-		const uint8_t *p = PL->data + i * PL->len; // the PL for the i-th individual
+		const uint8_t *p = (uint8_t*)PL->data + i * PL->len; // the PL for the i-th individual  //dong code, verify
 		uint8_t *g = gl + 10 * i;
 		for (k = j = 0; k < 4; ++k) {
 			for (l = k; l < 4; ++l) {
@@ -375,7 +372,7 @@ int bcf_gl10_indel(const bcf1_t *b, uint8_t *gl)
 	if (i == b->n_gi) return -1; // no PL
 	PL = b->gi + i;
 	for (i = 0; i < b->n_smpl; ++i) {
-		const uint8_t *p = PL->data + i * PL->len; // the PL for the i-th individual
+		const uint8_t *p = (uint8_t*)PL->data + i * PL->len; // the PL for the i-th individual //dong code, verify
 		uint8_t *g = gl + 10 * i;
 		for (k = j = 0; k < 4; ++k) {
 			for (l = k; l < 4; ++l) {

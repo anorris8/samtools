@@ -1,5 +1,8 @@
 #include <math.h>
 #include <stdlib.h>
+#include "..\glibc_win64_flat\_math_.h"
+
+#define lgamma __lgamma
 
 /* This program is implemented with ideas from this web page:
  *

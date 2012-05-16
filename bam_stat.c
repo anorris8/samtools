@@ -1,6 +1,8 @@
-#include <unistd.h>
+//#include <unistd.h>
 #include <assert.h>
 #include "bam.h"
+
+#include "glibc_win64_flat/getopt.h"
 
 typedef struct {
 	long long n_reads[2], n_mapped[2], n_pair_all[2], n_pair_map[2], n_pair_good[2];
@@ -55,7 +57,7 @@ int bam_flagstat(int argc, char *argv[])
 		fprintf(stderr, "Usage: samtools flagstat <in.bam>\n");
 		return 1;
 	}
-	fp = strcmp(argv[optind], "-")? bam_open(argv[optind], "r") : bam_dopen(fileno(stdin), "r");
+	fp = strcmp(argv[optind], "-")? bam_open(argv[optind], "r") : bam_dopen(_fileno(stdin), "r");
 	assert(fp);
 	header = bam_header_read(fp);
 	s = bam_flagstat_core(fp);

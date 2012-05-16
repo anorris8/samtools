@@ -1,4 +1,4 @@
-#include <unistd.h>
+//#include <unistd.h>
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
@@ -8,6 +8,8 @@
 #include "kstring.h"
 #include "kaln.h"
 #include "kprobaln.h"
+
+#include "glibc_win64_flat/getopt.h"
 
 #define USE_EQUAL 1
 #define DROP_TAG  2

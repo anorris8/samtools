@@ -6,6 +6,7 @@
 #include "kaln.h"
 #include "kprobaln.h"
 #include "khash.h"
+#include <malloc.h>
 KHASH_SET_INIT_STR(rg)
 
 #include "ksort.h"
@@ -171,7 +172,7 @@ int bcf_call_gap_prep(int n, int *n_plp, bam_pileup1_t **plp, int pos, bcf_calla
 		if (n_types >= 64) {
 			free(aux);
 			if (bam_verbose >= 2) 
-				fprintf(stderr, "[%s] excessive INDEL alleles at position %d. Skip the position.\n", __func__, pos + 1);
+				fprintf(stderr, "[%s] excessive INDEL alleles at position %d. Skip the position.\n", __FUNCTION__, pos + 1);
 			return -1;
 		}
 		types = (int*)calloc(n_types, sizeof(int));
@@ -382,8 +383,8 @@ int bcf_call_gap_prep(int n, int *n_plp, bam_pileup1_t **plp, int pos, bcf_calla
 	free(ref2); free(query);
 	{ // compute indelQ
 		int *sc, tmp, *sumq;
-		sc   = alloca(n_types * sizeof(int));
-		sumq = alloca(n_types * sizeof(int));
+		sc   = _alloca(n_types * sizeof(int));
+		sumq = _alloca(n_types * sizeof(int));
 		memset(sumq, 0, sizeof(int) * n_types);
 		for (s = K = 0; s < n; ++s) {
 			for (i = 0; i < n_plp[s]; ++i, ++K) {

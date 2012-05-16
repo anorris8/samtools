@@ -4,10 +4,6 @@
 #include <stdio.h>
 #include <zlib.h>
 
-#ifdef _WIN32
-#define drand48() ((double)rand() / RAND_MAX)
-#endif
-
 #include "ksort.h"
 KSORT_INIT_GENERIC(uint64_t)
 
@@ -104,7 +100,7 @@ void *bed_read(const char *fn)
 	int dret;
 	kstring_t *str;
 	// read the list
-	fp = strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(fileno(stdin), "r");
+	fp = strcmp(fn, "-")? gzopen(fn, "r") : gzdopen(_fileno(stdin), "r");
 	if (fp == 0) return 0;
 	str = calloc(1, sizeof(kstring_t));
 	ks = ks_init(fp);

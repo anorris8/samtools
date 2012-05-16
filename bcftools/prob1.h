@@ -2,6 +2,7 @@
 #define BCF_PROB1_H
 
 #include "bcf.h"
+#include "..\glibc_win64_flat\_math_.h"
 
 struct __bcf_p1aux_t;
 typedef struct __bcf_p1aux_t bcf_p1aux_t;
