@@ -28,6 +28,7 @@
    therefore I decide to heavily annotate this file, for Linux and
    Windows as well.  -ac */
 #include <WinSock2.h>
+#include <ws2tcpip.h>
 #include <Windows.h>
 #include <time.h>
 #include <stdio.h>
@@ -109,29 +110,6 @@ static int socket_connect(const char *host, const char *port)
     return fd;
 }
 #else
-/* MinGW's printf has problem with "%lld" */
-char *int64tostr(char *buf, int64_t x)
-{
-    int cnt;
-    int i = 0;
-    do {
-        buf[i++] = '0' + x % 10;
-        x /= 10;
-    } while (x);
-    buf[i] = 0;
-    for (cnt = i, i = 0; i < cnt/2; ++i) {
-        int c = buf[i]; buf[i] = buf[cnt-i-1]; buf[cnt-i-1] = c;
-    }
-    return buf;
-}
-
-int64_t strtoint64(const char *buf)
-{
-    int64_t x;
-    for (x = 0; *buf != '\0'; ++buf)
-        x = x * 10 + ((int64_t) *buf - 48);
-    return x;
-}
 /* In windows, the first thing is to establish the TCP connection. */
 int knet_win32_init()
 {
@@ -146,37 +124,24 @@ void knet_win32_destroy()
  * Mac (and presummably Linux). However, this function is not stable on
  * my Mac. It sometimes works fine but sometimes does not. Therefore for
  * non-Windows OS, I do not use this one. */
+/* Dong Xie, 2012-06-12, this is almost identicial to above code, merge possible*/
 static SOCKET socket_connect(const char *host, const char *port)
 {
-#define __err_connect(func)										\
-    do {														\
-        fprintf(stderr, "%s: %d\n", func, WSAGetLastError());	\
-        return -1;												\
-    } while (0)
+#define __err_connect(func) do { perror(func); freeaddrinfo(res); return -1; } while (0)
 
     int on = 1;
     SOCKET fd;
     struct linger lng = { 0, 0 };
-    struct sockaddr_in server;
-    struct hostent *hp = 0;
-    // open socket
-    if ((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) __err_connect("socket");
+    struct addrinfo hints, *res = 0;
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    if (getaddrinfo(host, port, &hints, &res) != 0) __err_connect("getaddrinfo");
+    if ((fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == INVALID_SOCKET) __err_connect("socket");
     if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char*)&on, sizeof(on)) == -1) __err_connect("setsockopt");
     if (setsockopt(fd, SOL_SOCKET, SO_LINGER, (char*)&lng, sizeof(lng)) == -1) __err_connect("setsockopt");
-    // get host info
-    if (isalpha(host[0])) hp = gethostbyname(host);
-    else {
-        struct in_addr addr;
-        addr.s_addr = inet_addr(host);
-        hp = gethostbyaddr((char*)&addr, 4, AF_INET);
-    }
-    if (hp == 0) __err_connect("gethost");
-    // connect
-    server.sin_addr.s_addr = *((unsigned long*)hp->h_addr);
-    server.sin_family= AF_INET;
-    server.sin_port = htons(atoi(port));
-    if (connect(fd, (struct sockaddr*)&server, sizeof(server)) != 0) __err_connect("connect");
-    // freehostent(hp); // strangely in MSDN, hp is NOT freed (memory leak?!)
+    if (connect(fd, res->ai_addr, res->ai_addrlen) != 0) __err_connect("connect");
+    freeaddrinfo(res);
     return fd;
 }
 #endif
@@ -327,30 +292,16 @@ int kftp_connect_file(knetFile *fp)
     }
     kftp_pasv_prep(fp);
     kftp_send_cmd(fp, fp->size_cmd, 1);
-#ifndef _WIN32
     if ( sscanf(fp->response,"%*d %lld", &file_size) != 1 )
     {
         fprintf(stderr,"[kftp_connect_file] %s\n", fp->response);
         return -1;
     }
-#else
-    {
-    const char *p = fp->response;
-    while (*p != ' ') ++p;
-    while (*p < '0' || *p > '9') ++p;
-    file_size = strtoint64(p);
-    }
-#endif
+
     fp->file_size = file_size;
     if (fp->offset>=0) {
         char tmp[32];
-#ifndef _WIN32
         sprintf(tmp, "REST %lld\r\n", (long long)fp->offset);
-#else
-        strcpy(tmp, "REST ");
-        int64tostr(tmp + 5, fp->offset);
-        strcat(tmp, "\r\n");
-#endif
         kftp_send_cmd(fp, tmp, 1);
     }
     kftp_send_cmd(fp, fp->retr, 0);
