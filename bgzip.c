@@ -87,6 +87,9 @@ int main(int argc, char **argv)
     long start, end, size;
 
     _set_fmode(O_BINARY); //dong code, verify
+    _setmode(_fileno(stdout), O_BINARY);
+    _setmode(_fileno(stdin), O_BINARY);
+
     compress = 1; pstdout = 0; start = 0; size = -1; end = -1; is_forced = 0;
     while((c  = getopt(argc, argv, "cdhfb:s:")) >= 0){
         switch(c){
@@ -104,13 +107,13 @@ int main(int argc, char **argv)
         return 1;
     }
     if (compress == 1) {
-        struct stat sbuf;
+        struct __stat64 sbuf;
         int f_src = _fileno(stdin);
         int f_dst = _fileno(stdout);
 
         if ( argc>optind )
         {
-            if ( stat(argv[optind],&sbuf)<0 ) 
+            if ( _stat64(argv[optind],&sbuf)<0 ) 
             { 
                 fprintf(stderr, "[bgzip] %s: %s\n", strerror(errno), argv[optind]);
                 return 1; 
@@ -122,7 +125,7 @@ int main(int argc, char **argv)
             }
 
             if (pstdout)
-                f_dst = _fileno(stdout);
+                f_dst = _fileno(stdout); //redundant code, dong
             else
             {
                 char *name = malloc(strlen(argv[optind]) + 5);
@@ -147,14 +150,14 @@ int main(int argc, char **argv)
         _close(f_src);
         return 0;
     } else {
-        struct stat sbuf;
+        struct __stat64 sbuf;
         int f_dst;
 
         if ( argc>optind )
         {
             char *name;
             int len;
-            if ( stat(argv[optind],&sbuf)<0 )
+            if ( _stat64(argv[optind],&sbuf)<0 )
             {
                 fprintf(stderr, "[bgzip] %s: %s\n", strerror(errno), argv[optind]);
                 return 1;

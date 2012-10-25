@@ -206,7 +206,7 @@ static void download_from_remote(const char *url)
 
 static char *get_local_version(const char *fn)
 {
-    struct stat sbuf;
+    struct __stat64 sbuf;
     char *fnidx = (char*)calloc(strlen(fn) + 5, 1);
     strcat(strcpy(fnidx, fn), ".bci");
     if ((strstr(fnidx, "ftp://") == fnidx || strstr(fnidx, "http://") == fnidx)) {
@@ -215,7 +215,7 @@ static char *get_local_version(const char *fn)
         for (p = fnidx + l - 1; p >= fnidx; --p)
             if (*p == '/') break;
         url = fnidx; fnidx = strdup(p + 1);
-        if (stat(fnidx, &sbuf) == 0) {
+        if (_stat64(fnidx, &sbuf) == 0) {
             free(url);
             return fnidx;
         }
@@ -223,7 +223,7 @@ static char *get_local_version(const char *fn)
         download_from_remote(url);
         free(url);
     }
-    if (stat(fnidx, &sbuf) == 0) return fnidx;
+    if (_stat64(fnidx, &sbuf) == 0) return fnidx;
     free(fnidx); return 0;
 }
 

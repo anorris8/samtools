@@ -24,13 +24,13 @@ int bcf_cat(int n, char * const *fn)
         bcf_t *in;
         bcf_hdr_t *h;
         off_t end;
-        struct stat s;
+        struct __stat64 s;
         in = bcf_open(fn[i], "r");
         h = bcf_hdr_read(in);
         if (i == 0) bcf_hdr_write(out, h);
         bcf_hdr_destroy(h);
 #ifdef _USE_KNETFILE
-        fstat(knet_fileno(in->fp->x.fpr), &s);
+        _fstat64(knet_fileno(in->fp->x.fpr), &s);
         end = s.st_size - 28;
         while (knet_tell(in->fp->x.fpr) < end) {
             int size = knet_tell(in->fp->x.fpr) + BUF_SIZE < end? BUF_SIZE : end - knet_tell(in->fp->x.fpr);
